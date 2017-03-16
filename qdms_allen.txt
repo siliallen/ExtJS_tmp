@@ -1,0 +1,2229 @@
+//allen start
+				var XMLtoJSON_array = [];
+				var arrayindex_one = 0;
+				XMLtoJSON_array[arrayindex_one] = new Array;
+				var arrayindex_two = 0;
+				var videoOrmusic = 0;//0 is DEVICE NAME, 1 is video, 2 is music
+				var codectype = 0;//0 is NOTHING, 1 is video, 2 is audio, 3 is format
+				var recursive = 0;//let parse xml function decide to recursive parse xml action
+				var vcodecindex = 0;
+				var acodecindex = 0;
+				var formatindex = 0;
+				var pretype = 0;
+				var alength, flength;
+				var acounted = 0, fcounted = 0;
+				var nowvcodec, nowacodec, whitelistindex = 0;
+				var DEVICE_NAME, VLEVEL, VBITRATE, VFRRAME, VPROFILE, MAXHEIGHT, MAXWIDTH, VOPTION, ALEVEL, ABITRATE, APROFILE, MAXFREQUENCY, MAXCHANNELS, AOPTION, SUBTYPE, PN, MIME, FOPTION;
+				var whitelist = [];
+				var whitelist_option = [];
+				var whitelist_audio = [];
+				pn_array[0] = [_LANG_NONE,_LANG_NONE];
+				var pnStore = new Ext.data.SimpleStore({
+					fields: [
+						{name: 'mime_name'},       
+						{name: 'pn_name'}, 
+					],
+					data: pn_array,
+				});
+				var mimeStore = new Ext.data.SimpleStore({
+					fields: [
+						{name: 'format_name'},
+						{name: 'mime_name'},
+					],
+					data: mime_array,
+				});
+				var mimeaudioStore = new Ext.data.SimpleStore({
+					fields: [
+						{name: 'format_name'},
+						{name: 'mime_name'},
+					],
+					data: mime_audio_array,
+				});
+				var subtypeStore = new Ext.data.SimpleStore({
+					fields: [
+						{name: 'format_name'},
+						{name: 'subtype_name'},
+					],
+					data: mpeg4subtype_array,
+				});
+				vprofile_array[0] = [_LANG_NONE,_LANG_NONE];
+				var vprofileStore = new Ext.data.SimpleStore({
+					fields: [
+						{name: 'vcodec_name'},
+						{name: 'vprofile_name'},
+					],
+					data: vprofile_array,
+				});
+				aprofile_array[0] = [_LANG_NONE,_LANG_NONE];
+				var aprofileStore = new Ext.data.SimpleStore({
+					fields: [
+						{name: 'acodec_name'},
+						{name: 'aprofile_name'},
+					],
+					data: aprofile_array,
+				});
+				vbitrate_array[0] = [_LANG_NONE];
+				var vbitrateStore = new Ext.data.SimpleStore({
+					fields: [
+						{name: 'vbitrate_name'},
+					],
+					data: vbitrate_array,
+				});
+				abitrate_array[0] = [_LANG_NONE];
+				var abitrateStore = new Ext.data.SimpleStore({
+					fields: [
+						{name: 'abitrate_name'},
+					],
+					data: abitrate_array,
+				});
+				samplerate_array[0] = [_LANG_NONE];
+				var samplerateStore = new Ext.data.SimpleStore({
+					fields: [
+						{name: 'samplerate_name'},
+					],
+					data: samplerate_array,
+				});
+				channels_array[0] = [_LANG_NONE];
+				var channelsStore = new Ext.data.SimpleStore({
+					fields: [
+						{name: 'channels_name'},
+					],
+					data: channels_array,
+				});
+				maxwidth_array[0] = [_LANG_NONE];
+				var maxwidthStore = new Ext.data.SimpleStore({
+					fields: [
+						{name: 'maxwidth_name'},
+					],
+					data: maxwidth_array,
+				});
+				maxheight_array[0] = [_LANG_NONE];
+				var maxheightStore = new Ext.data.SimpleStore({
+					fields: [
+						{name: 'maxheight_name'},
+					],
+					data: maxheight_array,
+				});
+				var formatStore = new Ext.data.SimpleStore({
+					fields: [
+						{name: 'formattype'},       
+						{name: 'format_name'}, 
+					],
+					data: format_array,
+				});
+				var vcodecStore = new Ext.data.SimpleStore({
+					fields: [       
+						{name: 'vcodec_name'}, 
+					],
+					data: video_codec_array,
+				});
+				var acodecStore = new Ext.data.SimpleStore({
+					fields: [       
+						{name: 'acodec_name'}, 
+					],
+					data: audio_codec_array,
+				});
+				
+				var customFormatStore;
+				var customMusicFormatSM;
+				var customFormatSM;
+				var customFormatCM;
+				var customMusicFormatCM;
+				var customMusicFormatStore;
+				var customisDirty;
+                var streaming_format_def;
+                var client_type_def;
+				function getCustID(MAC){
+					//08:00:27:9b:3e:8c
+					var tmp='CUST';
+					var j=0;
+					
+					for(var i = 0; i<6; i++){
+						tmp = tmp + MAC.substring(j,j+2);
+						j = j+3;
+					}
+					return tmp;
+				}
+				function genFormatWindow(n, rowIndex){
+					customMusicFormatStore = new Ext.data.SimpleStore({
+						fields: [
+							{name: 'Format_name'},
+							{name: 'ACodec_name'},
+							{name: 'whitelistindex'},
+							{name: 'customornot'},
+							{name: 'AudioLevel'},
+							{name: 'AudioBitrate'},
+							{name: 'AudioPorfile'},
+							{name: 'Channels'},
+							{name: 'Samplerate'},
+							{name: 'AOPTION'},
+							{name: 'Subtype'},
+							{name: 'PN'},
+							{name: 'MIME'},
+							{name: 'FOPTION'},
+						],
+						data: whitelist_audio,
+					});
+					customFormatStore = new Ext.data.SimpleStore({
+						fields: [
+							{name: 'Format_name'},
+							{name: 'VCodec_name'},
+							{name: 'ACodec_name'},
+							{name: 'array_index'},
+							{name: 'del_index'},
+						],
+						data: whitelist,
+					});
+					customFormatSM = new Ext.grid.CheckboxSelectionModel({
+						//header: 'Enable',
+						singleSelect: false,
+						//width: 125,
+						checkOnly: true
+					});
+					customMusicFormatSM = new Ext.grid.CheckboxSelectionModel({
+						//header: 'Enable',
+						singleSelect: false,
+						//width: 125,
+						checkOnly: true
+					});
+					customFormatCM = new Ext.grid.ColumnModel({
+						defaults: {
+							menuDisabled: true
+						},
+						columns: [customFormatSM,{
+							id: 'Format',
+							header: _LANG_FORMAT,
+							dataIndex: 'Format_name', 
+							sortable : true,           
+							width: 140
+						},{
+							id: 'Video_Codec',
+							header: _LANG_VIDEO_CODEC,
+							dataIndex: 'VCodec_name',       
+							sortable : false,     
+							width: 140
+						},{
+							id: 'Audio_Codec',
+							header: _LANG_AUDIO_CODEC,
+							dataIndex: 'ACodec_name',   
+							sortable : false,         
+							width: 140,
+							//hidden: true
+						},{
+							id: 'array_index',
+							header: 'array index',
+							dataindex: 'array_index',
+							sortable: false,
+							//width: 100,
+							hidden: true,
+						},{
+							id: 'del_index',
+							header: 'Del index',
+							dataindex: 'del_index',
+							sortable: false,
+							//width: 100,
+							hidden: true,
+						},{
+							xtype: 'actioncolumn',
+							header: _LANG_ADVANCED_SETTINGS,
+							width: 175,
+							items: [{
+								iconCls: 'streamFormatEditIcon',
+								tooltip: 'Advance setting',
+								handler: function(grid, rowIndex, colIndex) {
+									Ext.getCmp('format_window').hide();
+									var rec = grid.getStore().getAt(rowIndex);
+									genAdvancedWindow(rec);
+									Ext.getCmp('custom_setting').hide();
+								}
+							}]
+						}]
+					});
+					customMusicFormatCM = new Ext.grid.ColumnModel({
+						defaults: {
+							menuDisabled: true
+						},
+						columns: [customMusicFormatSM,{
+							id: 'Format',
+							header: _LANG_FORMAT,
+							dataIndex: 'Format_name', 
+							sortable : true,           
+							width: 150
+						},{
+							id: 'Audio',
+							header: _LANG_AUDIO_CODEC,
+							dataIndex: 'ACodec_name', 
+							sortable : false,           
+							width: 150
+						},{
+							xtype: 'actioncolumn',
+							header: _LANG_ADVANCED_SETTINGS,
+							width: 200,
+							items: [{
+								iconCls: 'streamFormatEditIcon',
+								tooltip: 'Advance setting',
+								handler: function(grid, rowIndex, colIndex) {
+									Ext.getCmp('format_window').hide();
+									var rec = grid.getStore().getAt(rowIndex);
+									genMusicAdvanceWin(rec);
+									Ext.getCmp('custom_setting').hide();
+								}
+							}]
+						}]
+					});
+					
+					var formatWindow = new Ext.Window({
+						title: _LANG_STREAM_FORMAT,
+						id: 'format_window',
+						layout:'fit',
+						border: false,
+						shadow : false,
+						//align : 'center',
+						autoScroll: true,
+						closable: true,			
+						resizable: true,
+						width: 800,
+						//height: 700,
+						//autoHeight:true,
+						cls: 'customWindow',
+						fbar: [{
+							text: _LANG_CANCEL,
+							width: fbarWidth,
+							handler: function(b, e){
+								//Ext.getCmp('custom_setting').close();
+								customisDirty = 0;
+								formatWindow.close();
+							}				
+						},'->',{
+							text: _LANG_APPLY_ALL,
+							width: fbarWidth,
+							handler: function(b, e){
+								function set_mediareceiver_record(record,sel_type){
+                                    if (sel_type == streamingFormat[0][0]) {
+                                        record.set('streaming_format',streamingFormat[0]);
+                                    } else if (sel_type == streamingFormat[1][0]) {
+                                        record.set('streaming_format',streamingFormat[1]);
+                                    } else if (sel_type == streamingFormat[2][0]) {
+                                        record.set('streaming_format',streamingFormat[2]);
+                                    }
+                                }
+
+                                function map_streaming_format(id){
+                                    if (id == 'setType_Auto') {
+                                        return streamingFormat[0][0];
+                                    } else if (id == 'setType_Original') {
+                                        return streamingFormat[1][0];
+                                    } else if (id == 'setType_User') {
+                                        return streamingFormat[2][0];
+                                    }
+                                }
+                                
+								createCUST = false;
+								var sel_type = map_streaming_format(Ext.getCmp('selType').getValue().id);
+/*
+                                if (streaming_format_def == sel_type) {//user not choose
+                                    //nothing or clean modifier
+                                    n.set('streaming_format', streaming_format_def);
+                                    n.set('client_type', client_type_def);
+                                    n.reject();
+                                } else {//user change type
+                                    if (sel_type == streamingFormat[0][0]) {
+                                    } else if (sel_type == streamingFormat[1][0] || sel_type == streamingFormat[2][0]) {
+                                        createCUST = true;
+                                    }
+                                    set_mediareceiver_record(n,sel_type);
+                                }
+*/
+								if (sel_type == streamingFormat[0][0] || sel_type == streamingFormat[1][0]) {
+									if (streaming_format_def == sel_type) {
+										n.reject();
+									} else {
+										n.set('streaming_format', sel_type);
+									}
+									createCUST = false;
+								} else {
+									createCUST = true;
+								}
+								
+								if(createCUST){
+									Ext.Ajax.request({
+										url: 'jsonAgent.php',
+										method: 'POST',
+										success: function(response, opts){
+											// console.log("php check return json=>" + response.responseText);	
+											var obj = Ext.util.JSON.decode(response.responseText);
+											if(obj.success == true){
+												// console.log("apply custom config success, errcode=" + obj.errcode + ', errmsg=' + obj.errmsg);
+												
+												n.set('streaming_format', "auto");
+												n.markDirty();
+												n.commit();
+												var CUSTID=getCustID(n.get('mac_address'));
+												n.set('client_type', CUSTID);
+												n.set('streaming_format', sel_type);
+											}else{
+												// console.log("apply custom config fail, errcode=" + obj.errcode + ', errmsg=' + obj.errmsg);
+											}
+										},
+										failure: function(response, opts){
+											// console.log('Apply custom config fail');
+										},
+
+										params:{
+											mac: n.get('mac_address'),
+											devicename: DEVICE_NAME,
+											whitelist_option: Ext.util.JSON.encode(whitelist_option),
+											whitelist: Ext.util.JSON.encode(whitelist),
+											whitelist_audio: Ext.util.JSON.encode(whitelist_audio),
+										} 										
+									});
+								}
+								formatWindow.close();
+							}
+						}],
+						listeners:{
+							'remove': function(container, component){
+								Ext.getBody().unmask();
+							},
+							'afterrender': function(thisCmp){
+								// console.log('show format window');
+								whitelist.length = 0;
+								whitelist_option.length = 0;
+								whitelist_audio.length = 0;
+								//console.log(n.get('streaming_format'));
+								var type;
+								if (n.get('streaming_format') == streamingFormat[0]){
+									type = n.get('client_type');
+									Ext.getCmp('setType_Auto').setValue(true);
+									thisCmp.setHeight(250);
+								} else if (n.get('streaming_format') == streamingFormat[1]){
+									type = n.get('client_type');
+									Ext.getCmp('setType_Original').setValue(true);
+									thisCmp.setHeight(250);
+								} else if (n.get('streaming_format') == streamingFormat[2]){
+									type = n.get('client_type');
+									Ext.getCmp('setType_User').setValue(true);
+									thisCmp.setHeight(700);
+								}
+                                //streaming_format_def = mediareceiver_data[rowIndex][6][0];
+                                streaming_format_def = n.get('streaming_format');
+                                client_type_def = mediareceiver_data[rowIndex][7];
+
+								Ext.Ajax.request({
+									url: 'xmlparseTojson.php',
+									method: 'GET',
+									success: function(response, opts) {
+										var obj = Ext.util.JSON.decode(response.responseText);
+                                        //console.info(response.responseText);
+										parseJSONattributes(obj);
+										arrayindex_one = arrayindex_two = videoOrmusic = codectype = recursive = vcodecindex = acodecindex = formatindex = pretype = alength = flength = acounted = fcounted = nowvcodec = nowacodec = whitelistindex = 0;
+										DEVICE_NAME = VLEVEL = VBITRATE = VFRRAME = VPROFILE = MAXHEIGHT = MAXWIDTH = VOPTION = ALEVEL = ABITRATE = APROFILE = MAXFREQUENCY = MAXCHANNELS = AOPTION = SUBTYPE = PN = MIME = FOPTION = null;
+										customFormatStore.loadData(whitelist);
+										customMusicFormatStore.loadData(whitelist_audio);
+                                        customFormatStore.filterBy(function (record){
+                                            if (record.get('del_index') == 0) return record;
+                                        });
+                                        customMusicFormatStore.filterBy(function (record){
+                                            if (record.get('customornot') == 0) return record;
+                                        });
+										//console.info(whitelist);
+										//console.info(whitelist_option);
+										//console.info(whitelist_audio);
+									},
+									failure: function(response, opts) {
+										// console.log('server-side failure with status code ' + response.status);
+									},
+									params: { clienttype: type }
+								});
+							}
+						},
+						items:[
+							new Ext.FormPanel({
+								id: 'customUPnP_setting_page',
+								border: false,
+								//width: 800,
+								//autowidth: true,
+								//height: '100%',
+								//autoheight: true,
+								autoScroll: true,
+								//dynamic: true,
+								bodyStyle:'padding:25px 10px 10px;',
+								
+								items:[
+									{
+										xtype: 'label',
+										text: _LANG_SET_STREAMING_FILE_FORMAT,
+										style:{
+											paddingLeft: '40px',
+											marginTop: '30px',
+											fontWeight: 'bold',
+											fontSize: '12px',
+											color:'#333333',
+										}
+									},{
+										xtype: 'radiogroup',
+										id: 'selType',
+										columns: 1,
+										hideLabel: true,
+										width:680,
+										style:{
+											margin: '20px 0 0 40px',
+										},
+										items: [
+											{
+												boxLabel: _LANG_AUTO_DETECT + '<img style="margin: 0 0 0 10" ext:qtip="'+_LANG_AUTO_DETECT_TIPS+'" src="">',
+												name: 'Transcoding_Type',
+												id: 'setType_Auto',
+												style:{
+													fontWeight: 'Regular',
+													fontSize: '12px',
+													color:'#000000',
+													marginLeft: '1px',//add for fixed bug in MAC
+													marginBottom: '1px'//add for fixed bug in MAC
+												},
+												inputValue: '0',
+												//checked: true,
+												listeners: 
+												{
+													check: function() 
+													{   //videoLabel    videogrid  musicLabel musicgrid
+														if (Ext.getCmp('setType_Auto').checked == false){
+														} else {
+															Ext.getCmp('custom_setting').hide();
+															Ext.getCmp('videoLabel').hide();
+															Ext.getCmp('videogrid').hide();
+															Ext.getCmp('musicLabel').hide();
+															Ext.getCmp('musicgrid').hide();
+															Ext.getCmp('format_window').setHeight(250);
+															Ext.getCmp('format_window').center();
+														}
+													}
+												}
+											},{
+												boxLabel: _LANG_MEDIA_RECEIVER_ORIGINAL + '<img style="margin: 0 0 0 10" ext:qtip="'+_LANG_MEDIA_RECEIVER_ORIGINAL_TIPS+'" src="">',
+												name: 'Transcoding_Type',
+												id: 'setType_Original',
+												style:{
+													fontWeight: 'Regular',
+													fontSize: '12px',
+													color:'#000000',
+													marginLeft: '1px',//add for fixed bug in MAC
+													marginBottom: '1px'//add for fixed bug in MAC
+												},
+												inputValue: '1',
+												listeners: 
+												{
+													check: function() 
+													{      
+														if (Ext.getCmp('setType_Original').checked == false){
+														} else {
+															Ext.getCmp('custom_setting').hide();
+															Ext.getCmp('videoLabel').hide();
+															Ext.getCmp('videogrid').hide();
+															Ext.getCmp('musicLabel').hide();
+															Ext.getCmp('musicgrid').hide();
+															Ext.getCmp('format_window').setHeight(250);
+															Ext.getCmp('format_window').center();
+														}
+													}
+												}
+											},{
+												boxLabel: _LANG_USER_DEFINED + '<img style="margin: 0 0 0 10" ext:qtip="'+_LANG_USER_DEFINED_TIPS+'" src="">',
+												name: 'Transcoding_Type',
+												id: 'setType_User',
+												style:{
+													fontWeight: 'Regular',
+													fontSize: '12px',
+													color:'#000000',
+													marginLeft: '1px',//add for fixed bug in MAC
+													marginBottom: '1px'//add for fixed bug in MAC
+												},
+												inputValue: '2',
+												listeners: 
+												{
+													check: function() 
+													{
+														//console.info("checkUser");
+														if (Ext.getCmp('setType_User').checked == false){
+														} else {
+															Ext.getCmp('custom_setting').show();
+															Ext.getCmp('videoLabel').show();
+															Ext.getCmp('videogrid').show();
+															Ext.getCmp('musicLabel').show();
+															Ext.getCmp('musicgrid').show();
+															Ext.getCmp('format_window').setHeight(700);
+															Ext.getCmp('format_window').center();
+														}
+													}
+												}
+											}
+										]
+									},new Ext.Panel({
+										id: 'custom_setting',
+										bodyStyle:'margin:0 25 30 0;padding:12 20;border-style:dotted;border-width:1px;border-color:black;',
+										//autoWidth: true,
+										//autoHeight: true,
+										//width:300,
+										width:680,
+										style:{
+											margin: '20px 0px 0px 40px'
+										},
+										items:[
+											{
+												xtype: 'label',
+												text: _LANG_PLEASE_NOTE,
+												style:{
+													fontWeight: 'bold',
+													fontSize: '12px'
+												}
+											},{
+												xtype: 'label',
+												html: '<br/>'+ _LANG_MEDIA_RECEIVER_NOTE_BODY +'<br/>',
+												style:{
+													fontSize: '12px'
+												}
+											}
+										]
+									}),{
+										xtype: 'label',
+										id: 'videoLabel',
+										text: _LANG_VIDEO,
+										style:{
+											marginLeft: '60px',
+											fontWeight: 'bold',
+											fontSize: '12px'
+										}
+									},new Ext.Panel({
+										id: 'videogrid',
+										bodyStyle:'margin:0 25 0 0;border-color:#d0d0d0;',
+										//autoWidth: true,
+										//autoHeight: true,
+										//width: 690,
+										//height:350,
+										width:680,
+										style:{
+											margin: '10px 5px 20px 60px'
+										},
+										items:[
+											new Ext.Container({
+												//layout: 'anchor',
+												width:690,
+												layout: {
+													type: 'hbox',
+												},
+												defaults: {
+													// implicitly create Container by specifying xtype
+													xtype: 'container',
+													//autoEl: 'div', // This is the default.
+													//layout: 'hbox',
+													style: {
+														padding: '2px',
+													}
+												},
+												items:[{
+														xtype: 'button',
+														text: _LANG_ADD,
+														cls: '',
+														width:100,
+														handler: function(b, e){
+															formatWindow.hide();
+															addcombination();
+														}
+													},{
+														xtype: 'button',
+														text: _LANG_REMOVE,
+														cls: '',
+														width:100,
+														handler: function(b, e){
+															var delarray = Ext.getCmp('customFormatGrid').getSelectionModel().getSelections();
+															if (delarray.length > 0){
+																formatWindow.hide();
+																Ext.MessageBox.show({
+																	msg: _LANG_REMOVE_FORAMT_MSG,
+																	cls:'customWindow',
+																	buttons: { 
+																		ok: _LANG_OK, 
+																		cancel: _LANG_CANCEL,
+																	},
+																	fn: showResult              
+																});
+															}
+														}
+													}
+												]
+											}),new Ext.grid.EditorGridPanel({
+												id: 'customFormatGrid',
+												store: customFormatStore,
+												sm: customFormatSM,
+												cm: customFormatCM,
+												loadMask: true,
+												autoScroll: true,
+												clicksToEdit: 1,
+												//autoExpandColumn: 'device',
+												border: false,
+												height:200,
+												//width:650,
+												stripeRows: true,
+											})
+										]
+									}),{
+										xtype: 'label',
+										id: 'musicLabel',
+										text: _LANG_MUSIC,
+										style:{
+											marginLeft: '60px',
+											fontWeight: 'bold',
+											fontSize: '12px'
+										}
+									},new Ext.Panel({
+										id: 'musicgrid',
+										bodyStyle:'margin:0 0 0 0;border-color:#d0d0d0;',
+										//autoWidth: true,
+										//autoHeight: true,
+										//width: 690,
+										//height:350,
+										width:680,
+										style:{
+											margin: '10px 5px 0px 60px',
+                                            //padding: '10 0 10 0px'
+										},
+										items:[
+											new Ext.Container({
+												//layout: 'anchor',
+												layout: {
+													type: 'hbox',
+												},
+												defaults: {
+													// implicitly create Container by specifying xtype
+													xtype: 'container',
+													//autoEl: 'div', // This is the default.
+													//layout: 'hbox',
+													style: {
+														padding: '3px'
+													}
+												},
+												items:[
+													{
+														xtype: 'button',
+														text: _LANG_ADD,
+														cls: '',
+														width:100,
+														handler: function(b, e){
+															formatWindow.hide();
+															addMusicCombination();
+														}
+													},{
+														xtype: 'button',
+														text: _LANG_REMOVE,
+														cls: '',
+														width:100,
+														handler: function(b, e){
+															var delarray = Ext.getCmp('customMusicFormatGrid').getSelectionModel().getSelections();
+															if (delarray.length > 0){
+																formatWindow.hide();
+																Ext.MessageBox.show({
+																	msg: _LANG_REMOVE_FORAMT_MSG,
+																	cls:'customWindow',
+																	buttons: { 
+																		ok: _LANG_OK, 
+																		cancel: _LANG_CANCEL,
+																	},
+																	fn: showMusicResult             
+																});
+															}
+														}
+													}
+												]
+											}),new Ext.grid.EditorGridPanel({
+												id: 'customMusicFormatGrid',
+												store: customMusicFormatStore,
+												sm: customMusicFormatSM,
+												cm: customMusicFormatCM,
+												loadMask: true,
+												autoScroll: true,
+												clicksToEdit: 1,
+												//autoExpandColumn: 'device',
+												border: false,
+												height:200,
+												//width:650,
+												stripeRows: true,
+											})
+										]
+									})
+								]
+							})
+						]
+					});
+						//width: 800,
+						//height: 700,
+					//formatWindow.setWidth(800);
+					//formatWindow.setHeight(700);
+					formatWindow.show();
+				}
+				function checkRepeat(f, v, a){
+					if (!f || !v || !a)
+						return 0;
+
+                    for (var i=0; i<whitelist.length; i++) {
+                        if (whitelist[i][0]==f && whitelist[i][1]==v && whitelist[i][2]==a && whitelist[i][4]==0) {
+                            return 0;
+                        }
+                    }
+					return 1;
+				};
+				function checkMusicRepeat(f, a){
+					if (!f || !a)
+						return 0;
+
+                    for (var i=0; i<whitelist_audio.length; i++) {
+                        if (whitelist_audio[i][0]==f && whitelist_audio[i][1]==a && whitelist_audio[i][3]==0) {
+                            return 0;
+                        }
+                    }
+					return 1;
+				};
+				function addnewMusicCombination(f, a){
+					var query = mimeaudioStore.query('format_name', f);
+					var mime_v = query.item(0);
+					var length = whitelist_audio.length;
+					whitelist_audio[length] = new Array;
+					whitelist_audio[length][0] = f;
+					whitelist_audio[length][1] = a;
+					whitelist_audio[length][2] = length;
+					whitelist_audio[length][3] = 0;
+					whitelist_audio[length][4] = -1;
+					whitelist_audio[length][5] = -1;
+					whitelist_audio[length][6] = -1;
+					whitelist_audio[length][7] = 2;
+					whitelist_audio[length][8] = 44100;
+					whitelist_audio[length][9] = -1;
+					whitelist_audio[length][10] = -1;
+					whitelist_audio[length][11] = -1;
+					whitelist_audio[length][12] = mime_v.json[1];
+					whitelist_audio[length][13] = -1;
+					
+					Ext.getCmp('customMusicFormatGrid').getStore().loadData(whitelist_audio);
+                    Ext.getCmp('customMusicFormatGrid').getStore().filterBy(function (record){
+                        if (record.get('customornot') == 0) return record;
+                    });
+					customisDirty = 1;
+				};
+				function addnewcombination(f, v, a){
+					var query = mimeStore.query('format_name', f);
+					var mime_v = query.item(0);
+					
+					var length = whitelist.length;
+					whitelist[length] = new Array;
+					whitelist[length][0] = f;
+					whitelist[length][1] = v;
+					whitelist[length][2] = a;
+					whitelist[length][3] = length;
+					whitelist[length][4] = 0;
+					
+					whitelist_option[length] = new Array;
+					whitelist_option[length][0] = -1;
+					whitelist_option[length][1] = -1;
+					whitelist_option[length][2] = -1;
+					whitelist_option[length][3] = -1;
+					whitelist_option[length][4] = -1;
+					whitelist_option[length][5] = 1920;
+					whitelist_option[length][6] = 1080;
+					whitelist_option[length][7] = -1;
+					whitelist_option[length][8] = -1;
+					whitelist_option[length][9] = -1;
+					whitelist_option[length][10] = -1;
+					whitelist_option[length][11] = 2;
+					whitelist_option[length][12] = 44100;
+					whitelist_option[length][13] = -1;
+					whitelist_option[length][14] = -1;
+					whitelist_option[length][15] = -1;
+					whitelist_option[length][16] = mime_v.json[1];
+					whitelist_option[length][17] = -1;
+					
+					Ext.getCmp('customFormatGrid').getStore().loadData(whitelist);
+                    Ext.getCmp('customFormatGrid').getStore().filterBy(function (record){
+                        if (record.get('del_index') == 0) return record;
+                    });
+					customisDirty = 1;
+				};
+				function showMusicResult(btn){
+					if (btn == 'ok'){
+						//globalLoadMask.show();
+						var delarray = Ext.getCmp('customMusicFormatGrid').getSelectionModel().getSelections();
+                        for (var i=0; i<delarray.length; i++) {
+                            whitelist_audio[delarray[i].get('whitelistindex')][3]=1;
+                        }
+                        Ext.getCmp('customMusicFormatGrid').getStore().loadData(whitelist_audio);
+                        Ext.getCmp('customMusicFormatGrid').getStore().filterBy(function (record){
+                            if (record.get('customornot') == 0) return record;
+                        });
+						Ext.getCmp('format_window').show();
+						customisDirty = 1;
+					} else if (btn == 'cancel'){
+						Ext.getCmp('format_window').show();
+					}
+				}
+				function showResult(btn){
+					if (btn == 'ok'){
+						var delarray = Ext.getCmp('customFormatGrid').getSelectionModel().getSelections();
+                        for (var i=0; i<delarray.length; i++) {
+                            whitelist[delarray[i].get('array_index')][4]=1;
+                        }
+                        Ext.getCmp('customFormatGrid').getStore().loadData(whitelist);
+                        Ext.getCmp('customFormatGrid').getStore().filterBy(function (record){
+                            if (record.get('del_index') == 0) return record;
+                        });
+						Ext.getCmp('format_window').show();
+						customisDirty = 1;
+					} else if (btn == 'cancel'){
+						Ext.getCmp('format_window').show();
+					}
+				}
+				function addMusicCombination(){
+					var addwindow = new Ext.Window({
+						width: 440,
+						height: 280,
+						layout:'form',
+						closable: false,
+						cls: 'customWindow',
+						bodyStyle:'background-color: #ffffff;',
+						fbar: [{
+							text: _LANG_OK,
+							width: fbarWidth,
+							handler: function(b, e){
+								if (checkMusicRepeat(Ext.getCmp('Music_format_combo').getValue() ,Ext.getCmp('Music_acodec_combo').getValue())) {
+									addnewMusicCombination(Ext.getCmp('Music_format_combo').getValue(),Ext.getCmp('Music_acodec_combo').getValue());
+									addwindow.close();
+									Ext.getCmp('format_window').show();
+								} else {
+									//Ext.MessageBox.alert('Error', 'You have same combination.');
+									Ext.MessageBox.show({
+										title: _LANG_ERROR,
+										msg: _LANG_CONFLIT_COMBINSTAION,
+										cls:'customWindow',
+										buttons: { 
+											ok: _LANG_OK, 
+											//cancel: _LANG_CANCEL,
+										},          
+									});
+								}
+							}
+						},{
+							text: _LANG_CANCEL,
+							width: fbarWidth,							
+							handler: function(b, e){
+								addwindow.close();
+								Ext.getCmp('format_window').show();
+							}
+						}],
+						defaults:{
+							style:{
+								marginTop: '30px',
+								marginRight: '60px',
+								marginLeft: '60px'
+							}
+						},
+						items:[
+							new Ext.form.FormPanel({
+								border: false,
+								defaults:{
+									style:{
+										marginBottom: '20px'
+									}
+								},
+								items: [
+									{
+										xtype: 'combo',
+										id: 'Music_format_combo',
+										store: formatStore,
+										width: 180,
+										forceSelection : true,
+										editable:false, 
+										fieldLabel: _LANG_FORMAT,
+										hideLabel: false,
+										displayField: 'format_name',
+										valueField: 'format_name',
+										typeAhead: true,
+										mode: 'local',
+										//forceSelection: true,
+										triggerAction: 'all',
+										selectOnFocus:true,
+										allowBlank:false,
+										listeners:{
+											'expand': function(){
+												formatStore.clearFilter();
+												formatStore.filterBy(function (record){
+													if (record.get('formattype') == 'audio') return record;
+												});
+											}
+										}
+									},{
+										xtype: 'combo',
+										id: 'Music_acodec_combo',
+										store: acodecStore,
+										width: 180,
+										forceSelection : true,
+										editable:false, 
+										fieldLabel: _LANG_AUDIO_CODEC,
+										hideLabel: false,
+										displayField: 'acodec_name',
+										valueField: 'acodec_name',
+										typeAhead: true,
+										mode: 'local',
+										//forceSelection: true,
+										triggerAction: 'all',
+										selectOnFocus:true,
+										allowBlank:false,
+										style:{
+											marginBottom: '80px'
+										}
+									}
+								]
+							})				
+						]
+					});
+					addwindow.setTitle(_LANG_ADD_NEW_AUDIO_FORMAT);
+					addwindow.show();
+				}
+				function addcombination(){
+					var addwindow = new Ext.Window({
+						width: 440,
+						heigh: 280,
+						layout:'form',
+						closable: false,
+						cls: 'customWindow',
+						bodyStyle:'background-color: #ffffff;',
+						fbar: [{
+							text: _LANG_OK,
+							width: fbarWidth,
+							handler: function(b, e){
+								if (checkRepeat(Ext.getCmp('format_combo').getValue(), Ext.getCmp('vcodec_combo').getValue(),Ext.getCmp('acodec_combo').getValue())) {
+									addnewcombination(Ext.getCmp('format_combo').getValue(), Ext.getCmp('vcodec_combo').getValue(),Ext.getCmp('acodec_combo').getValue());
+									addwindow.close();
+									Ext.getCmp('format_window').show();
+								} else {
+									Ext.MessageBox.show({
+										title: _LANG_ERROR,
+										msg: _LANG_CONFLIT_COMBINSTAION,
+										cls:'customWindow',
+										buttons: { 
+											ok: _LANG_OK, 
+											//cancel: _LANG_CANCEL,
+										},          
+									});
+								}
+							}
+						},{
+							text: _LANG_CANCEL,
+							width: fbarWidth,
+							handler: function(b, e){
+								addwindow.close();
+								Ext.getCmp('format_window').show();
+							}
+						}],
+						defaults:{
+							style:{
+								marginTop: '30px',
+								marginRight: '60px',
+								marginLeft: '60px'
+							}
+						},
+						items:[
+							new Ext.form.FormPanel({
+								border: false,
+								defaults:{
+									style:{
+										marginBottom: '20px'
+									}
+								},
+								items: [
+									{
+										xtype: 'combo',
+										id: 'format_combo',
+										store: formatStore,
+										width: 180,
+										forceSelection : true,
+										editable:false, 
+										fieldLabel: _LANG_FORMAT,
+										hideLabel: false,
+										displayField: 'format_name',
+										valueField: 'format_name',
+										typeAhead: true,
+										mode: 'local',
+										//forceSelection: true,
+										triggerAction: 'all',
+										selectOnFocus:true,
+										allowBlank:false,
+										listeners:{
+											'expand': function(){
+												formatStore.clearFilter();
+												formatStore.filterBy(function (record){
+													if (record.get('formattype') == 'video') return record;
+												});
+											}
+										}
+									},{
+										xtype: 'combo',
+										id: 'vcodec_combo',
+										store: vcodecStore,
+										width: 180,
+										forceSelection : true,
+										editable:false, 
+										fieldLabel: _LANG_VIDEO_CODEC,
+										hideLabel: false,
+										displayField: 'vcodec_name',
+										valueField: 'vcodec_name',
+										typeAhead: true,
+										mode: 'local',
+										//forceSelection: true,
+										triggerAction: 'all',
+										selectOnFocus:true,
+										allowBlank:false,
+									},{
+										xtype: 'combo',
+										id: 'acodec_combo',
+										store: acodecStore,
+										width: 180,
+										forceSelection : true,
+										editable:false, 
+										fieldLabel: _LANG_AUDIO_CODEC,
+										hideLabel: false,
+										displayField: 'acodec_name',
+										valueField: 'acodec_name',
+										typeAhead: true,
+										mode: 'local',
+										//forceSelection: true,
+										triggerAction: 'all',
+										selectOnFocus:true,
+										allowBlank:false,
+										style:{
+											marginBottom: '80px'
+										}
+									}
+								]
+							})				
+						]
+					});
+					addwindow.setTitle(_LANG_ADD_NEW_VIDEO_FORMAT);
+					addwindow.show();
+				}
+function genMusicAdvanceWin(n){
+	var advacodec = new Ext.form.FormPanel({
+		border: false,
+		//width: 550,
+		//height: 150,
+		//labelAlign: "right",
+		dafault:{width: 200},
+		labelWidth: 200,
+		style:{
+			marginTop: "10px",
+			marginBottom: "10px"
+		},
+		items:[/*{
+			xtype: 'label',
+			id: 'Music_samplerate_label',
+			text: _LANG_SAMPLERATE,
+			autoWidth: false,
+			width: 170,
+		},*/{
+			xtype: 'combo',
+			id: 'Music_samplerate_combo',
+			store: samplerateStore,
+			editable:false,
+			fieldLabel: _LANG_SAMPLERATE,
+			width: 300,
+			hideLabel: false,
+			displayField: 'samplerate_name',
+			valueField: 'samplerate_name',
+			typeAhead: true,
+			mode: 'local',
+			//forceSelection: true,
+			triggerAction: 'all',
+			selectOnFocus:true,
+			allowBlank:false,
+			//value: videoTitleStyleStore.getAt(0).get('id')
+		},{
+			xtype: 'combo',
+			id: 'Music_channels_combo',
+			width: 300,
+			store: channelsStore,
+			editable:false,					
+			fieldLabel: _LANG_CHANNELS,
+			hideLabel: false,
+			displayField: 'channels_name',
+			valueField: 'channels_name',
+			typeAhead: true,
+			mode: 'local',
+			//forceSelection: true,
+			triggerAction: 'all',
+			selectOnFocus:true,
+			allowBlank:false,
+			//value: videoTitleStyleStore.getAt(0).get('id')
+		},{
+			xtype: 'combo',
+			id: 'Music_abitrate_combo',
+			width: 300,
+			store: abitrateStore,
+			editable:false,
+			fieldLabel: _LANG_BITRATE,
+			hideLabel: false,
+			displayField: 'abitrate_name',
+			valueField: 'abitrate_name',
+			typeAhead: true,
+			mode: 'local',
+			//forceSelection: true,
+			triggerAction: 'all',
+			selectOnFocus:true,
+			allowBlank:false,
+			//value: videoTitleStyleStore.getAt(0).get('id')
+		},{
+			xtype: 'combo',
+			id: 'Music_aprofile_combo',
+			store: aprofileStore,
+			editable:false,
+			fieldLabel: _LANG_PROFILE,
+			width: 300,
+			hideLabel: false,
+			displayField: 'aprofile_name',
+			valueField: 'aprofile_name',
+			typeAhead: true,
+			mode: 'local',
+			//forceSelection: true,
+			triggerAction: 'all',
+			selectOnFocus:true,
+			allowBlank:false,
+			//value: videoTitleStyleStore.getAt(0).get('id')
+			listeners:{
+				'expand': function(){
+					aprofileStore.clearFilter();
+					aprofileStore.filterBy(function (record){
+						if (record.get('acodec_name') == n.get('ACodec_name')) return record;
+						if (record.get('acodec_name') == _LANG_NONE) return record;
+					});
+				}
+			}
+		}]
+	});
+	
+	var adformat = new Ext.form.FormPanel({
+		border: false,
+		//width: 550,
+		//height: 150,
+		dafault:{width: 200},
+		labelWidth: 200,
+		style:{
+			marginTop: "10px",
+			marginBottom: "10px"
+		},
+		items:[{
+			xtype: 'combo',
+			id: 'Music_mime_combo',
+			store: mimeaudioStore,
+			width: 300,
+			editable:false,
+			fieldLabel: _LANG_MIME,
+			hideLabel: false,
+			displayField: 'mime_name',
+			valueField: 'mime_name',
+			typeAhead: true,
+			mode: 'local',
+			//forceSelection: true,
+			triggerAction: 'all',
+			selectOnFocus:true,
+			allowBlank:false,
+			//value: videoTitleStyleStore.getAt(0).get('id')
+			listeners:{
+				'expand': function(){
+					mimeaudioStore.clearFilter();
+					mimeaudioStore.filterBy(function (record){
+						// console.info(record);	
+						if (record.get('format_name') == n.get('Format_name')) return record;
+						if (record.get('format_name') == _LANG_NONE) return record;
+					});
+				}
+			}
+		},{
+			xtype: 'combo',
+			id: 'Music_pn_combo',
+			store: pnStore,
+			editable:false, 
+			fieldLabel: _LANG_PN,
+			width: 300,
+			hideLabel: false,
+			displayField: 'pn_name',
+			valueField: 'pn_name',
+			typeAhead: true,
+			mode: 'local',
+			//forceSelection: true,
+			triggerAction: 'all',
+			selectOnFocus:true,
+			allowBlank:false,
+			//value: videoTitleStyleStore.getAt(0).get('id')
+			listeners:{
+				'expand': function(combo){
+					pnStore.clearFilter();
+					pnStore.filterBy(function (record){
+						if (record.get('mime_name') == Ext.getCmp('Music_mime_combo').getValue()) return record;
+						if (record.get('mime_name') == _LANG_NONE) return record;
+					});
+					
+				}
+			}
+		}]
+	});
+
+	var customMusicWin = new Ext.Window({
+		width: 600,
+		height: 400,
+		layout:'form',
+		closable: false,
+		bodyStyle:'background-color:#ffffff;padding:30px;',
+		cls: 'customWindow',
+		fbar: [{
+				text: _LANG_APPLY,
+				width: fbarWidth,
+				handler: function(b, e){
+					getMusicnewSetting(n.get('whitelistindex'))
+					customMusicWin.close();
+					Ext.getCmp('format_window').show();
+					customisDirty = 1;
+				}
+			},{
+				text: _LANG_CANCEL,
+				width: fbarWidth,
+				handler: function(b, e){
+					customMusicWin.close();
+					Ext.getCmp('format_window').show();
+			}
+		}],
+		items:[{
+				xtype: 'label',
+				text: _LANG_AUDIO_CODEC + ' ' + n.get('ACodec_name'),
+				style:{
+					fontWeight: 'bold',
+					fontSize: '12px'
+				}
+			},advacodec,{
+				xtype: 'label',
+				text: _LANG_FORMAT +' ' + n.get('Format_name'),
+				style:{
+					fontWeight: 'bold',
+					fontSize: '12px'
+				}
+			},adformat
+		]
+	});
+	keyMusicDefault(n.get('whitelistindex'));
+	customMusicWin.setTitle(_LANG_ADVANCED_SETTINGS);
+	customMusicWin.show();
+}
+
+function genAdvancedWindow(n){
+	var advvcodec = new Ext.form.FormPanel({
+		border: false,
+		dafault:{width: 200},
+		labelWidth: 200,
+        style:{
+            marginTop: "10px",
+            marginBottom: "10px"
+        },
+		items:[{
+            xtype: 'combo',
+            id: 'maxwidth_combo',
+            width: 255,
+            editable:false,
+            store: maxwidthStore,
+            fieldLabel: _LANG_MAX_WIDTH,
+            hideLabel: false,
+            displayField: 'maxwidth_name',
+            valueField: 'maxwidth_name',
+            typeAhead: true,
+            mode: 'local',
+            //forceSelection: true,
+            triggerAction: 'all',
+            selectOnFocus:true,
+            allowBlank:false,
+            //value: videoTitleStyleStore.getAt(0).get('id')
+        },{
+            xtype: 'combo',
+            id: 'maxheight_combo',
+            store: maxheightStore,
+            width: 255,
+            editable:false,
+            fieldLabel: _LANG_MAX_HEIGHT,
+            hideLabel: false,
+            displayField: 'maxheight_name',
+            valueField: 'maxheight_name',
+            typeAhead: true,
+            mode: 'local',
+            //forceSelection: true,
+            triggerAction: 'all',
+            selectOnFocus:true,
+            allowBlank:false,
+            //value: videoTitleStyleStore.getAt(0).get('id')
+        },{
+            xtype: 'combo',
+            id: 'vbitrate_combo',
+            store: vbitrateStore,
+            width: 255,
+            editable:false,
+            fieldLabel: _LANG_BITRATE,
+            hideLabel: false,
+            displayField: 'vbitrate_name',
+            valueField: 'vbitrate_name',
+            typeAhead: true,
+            mode: 'local',
+            //forceSelection: true,
+            triggerAction: 'all',
+            selectOnFocus:true,
+            allowBlank:false,
+        },{
+            xtype: 'combo',
+            id: 'vprofile_combo',
+            store: vprofileStore,
+                    width: 255,
+            editable:false,
+            fieldLabel: _LANG_PROFILE,
+            hideLabel: false,
+            displayField: 'vprofile_name',
+            valueField: 'vprofile_name',
+            typeAhead: true,
+            mode: 'local',
+            //forceSelection: true,
+            triggerAction: 'all',
+            selectOnFocus:true,
+            allowBlank:false,
+            //value: videoTitleStyleStore.getAt(0).get('id')
+            listeners:{
+                'expand': function(){
+                    vprofileStore.clearFilter();
+                    vprofileStore.filterBy(function (record){
+                        if (record.get('vcodec_name') == n.get('VCodec_name')) return record;
+						if (record.get('vcodec_name') == _LANG_NONE) return record;
+                    });
+                }
+            }
+        }]
+	});
+	
+	var adacodec = new Ext.form.FormPanel({
+		border: false,
+		//width: 550,
+		//height: 150,
+		dafault:{width: 200},
+		labelWidth: 200,
+        style:{
+            marginTop: "10px",
+            marginBottom: "10px"
+        },
+		items:[{
+			xtype: 'combo',
+			id: 'samplerate_combo',
+            width: 255,
+			store: samplerateStore,
+			editable:false,
+			fieldLabel: _LANG_SAMPLERATE,
+			hideLabel: false,
+			displayField: 'samplerate_name',
+			valueField: 'samplerate_name',
+			typeAhead: true,
+			mode: 'local',
+			//forceSelection: true,
+			triggerAction: 'all',
+			selectOnFocus:true,
+			allowBlank:false,
+			//value: videoTitleStyleStore.getAt(0).get('id')
+		},{
+			xtype: 'combo',
+			id: 'channels_combo',
+            width: 255,
+			store: channelsStore,
+			editable:false,					
+			fieldLabel: _LANG_CHANNELS,
+			hideLabel: false,
+			displayField: 'channels_name',
+			valueField: 'channels_name',
+			typeAhead: true,
+			mode: 'local',
+			//forceSelection: true,
+			triggerAction: 'all',
+			selectOnFocus:true,
+			allowBlank:false,
+			//value: videoTitleStyleStore.getAt(0).get('id')
+		},{
+			xtype: 'combo',
+			id: 'abitrate_combo',
+			width: 255,
+			store: abitrateStore,
+			editable:false,
+			fieldLabel: _LANG_BITRATE,
+			hideLabel: false,
+			displayField: 'abitrate_name',
+			valueField: 'abitrate_name',
+			typeAhead: true,
+			mode: 'local',
+			//forceSelection: true,
+			triggerAction: 'all',
+			selectOnFocus:true,
+			allowBlank:false,
+			//value: videoTitleStyleStore.getAt(0).get('id')
+		},{
+			xtype: 'combo',
+			id: 'aprofile_combo',
+			width: 255,
+			store: aprofileStore,
+			editable:false,
+			fieldLabel: _LANG_PROFILE,
+			hideLabel: false,
+			displayField: 'aprofile_name',
+			valueField: 'aprofile_name',
+			typeAhead: true,
+			mode: 'local',
+			//forceSelection: true,
+			triggerAction: 'all',
+			selectOnFocus:true,
+			allowBlank:false,
+			//value: videoTitleStyleStore.getAt(0).get('id')
+			listeners:{
+				'expand': function(){
+					aprofileStore.clearFilter();
+					aprofileStore.filterBy(function (record){
+						// console.info(record);	
+						if (record.get('acodec_name') == n.get('ACodec_name')) return record;
+						if (record.get('acodec_name') == _LANG_NONE) return record;
+					});
+				}
+			}
+		}]
+	});
+	
+	var adformat = new Ext.form.FormPanel({
+		border: false,
+		//width: 550,
+		//height: 150,
+		dafault:{width: 200},
+		labelWidth: 200,
+        style:{
+            marginTop: "10px",
+            marginBottom: "10px"
+        },
+		items:[{
+            xtype: 'combo',
+            id: 'mime_combo',
+            width: 255,
+            store: mimeStore,
+            editable:false,
+            fieldLabel: _LANG_MIME,
+            hideLabel: false,
+            displayField: 'mime_name',
+            valueField: 'mime_name',
+            typeAhead: true,
+            mode: 'local',
+            //forceSelection: true,
+            triggerAction: 'all',
+            selectOnFocus:true,
+            allowBlank:false,
+            //value: videoTitleStyleStore.getAt(0).get('id')
+            listeners:{
+                'expand': function(){
+                    mimeStore.clearFilter();
+                    mimeStore.filterBy(function (record){
+                        // console.info(record);	
+                        if (record.get('format_name') == n.get('Format_name')) return record;
+						if (record.get('format_name') == _LANG_NONE) return record;
+                    });
+                }
+            }
+        },
+        {
+            xtype: 'combo',
+            id: 'pn_combo',
+            width: 255,
+            store: pnStore,
+            editable:false, 
+            fieldLabel: _LANG_PN,
+            hideLabel: false,
+            displayField: 'pn_name',
+            valueField: 'pn_name',
+            typeAhead: true,
+			value: 'None',
+            mode: 'local',
+            //forceSelection: true,
+            triggerAction: 'all',
+            selectOnFocus:true,
+            allowBlank:false,
+            //value: videoTitleStyleStore.getAt(0).get('id')
+            listeners:{
+                'expand': function(){
+                    pnStore.clearFilter();
+                    pnStore.filterBy(function (record){
+                        if (record.get('mime_name') == Ext.getCmp('mime_combo').getValue()) return record;
+						if (record.get('mime_name') == _LANG_NONE) return record;
+                    });
+                }
+            }
+        }
+		]
+	});
+
+	var customWindow = new Ext.Window({
+		width: 550,
+		height: 500,
+		layout:'form',
+		closable: false,
+		bodyStyle:'background-color:#ffffff;padding:30px;',
+		cls: 'customWindow',
+		fbar: [{
+			text: _LANG_APPLY,
+			width: fbarWidth,
+			handler: function(b, e){
+				getNewsetting(n.get('array_index'));
+				customWindow.close();
+				Ext.getCmp('format_window').show();
+				customisDirty = 1;
+			}
+		},{
+			text: _LANG_CANCEL,
+			width: fbarWidth,
+			handler: function(b, e){
+				customWindow.close();
+				Ext.getCmp('format_window').show();
+			}
+		}],
+		items:[{
+			xtype: 'label',
+			width: 400,
+			text: _LANG_VIDEO_CODEC + ' ' + n.get('VCodec_name'),
+			style:{
+				fontWeight: 'bold',
+				fontSize: '12px'
+			}
+		},advvcodec,{
+			xtype: 'label',
+				//width: 400,
+			text: _LANG_AUDIO_CODEC + ' ' + n.get('ACodec_name'),
+			style:{
+				fontWeight: 'bold',
+				fontSize: '12px'
+			}
+		},adacodec,{
+			xtype: 'label',
+			id: 'advFlabel',
+			//width: 400,
+			text: _LANG_FORMAT + ' ' + n.get('Format_name'),
+			style:{
+				fontWeight: 'bold',
+				fontSize: '12px'
+			}
+		},adformat
+		]
+    }
+	);
+	keydefault(n.get('array_index'));
+	//document.getElementById('advFlabel').addClass(testmargin);
+	customWindow.setTitle(_LANG_ADVANCED_SETTINGS);
+	customWindow.show();
+}
+				//VLEVEL, VBITRATE, VFRRAME, VPROFILE, MAXHEIGHT, MAXWIDTH, ALEVEL, ABITRATE, APROFILE, MAXFREQUENCY, MAXCHANNELS, SUBTYPE, PN, MIME;
+				//whitelist, whitelist_audio, whitelist_option
+				function parseJSONattributes(jsonObj){
+					//global var: XMLtoJSON_array, arrayindex_one, arrayindex_two
+					for (var key in jsonObj){
+						if (key == 'XML_attributes'){
+							for (var value in jsonObj[key]){
+								if (codectype == 1){
+									if (videoOrmusic == 1){
+										if (jsonObj[key][value].match('CODEC_ID') == 'CODEC_ID')
+											nowvcodec = jsonObj[key][value];
+											
+										if (value == 'PROFILE')
+											VPROFILE = jsonObj[key][value];
+										else if (value == 'MAXHEIGHT')
+											MAXHEIGHT = jsonObj[key][value];
+										else if (value == 'MAXWIDTH')
+											MAXWIDTH = jsonObj[key][value];
+										else if (value == 'LEVEL')
+											VLEVEL = jsonObj[key][value];
+										else if (value == 'MAXBITRATE')
+											VBITRATE = jsonObj[key][value];
+										else if (value == 'OPTION')
+											VOPTION = jsonObj[key][value];
+									}
+								} else if (codectype == 2){
+									//ALEVEL = ABITRATE = APROFILE = MAXFREQUENCY = MAXCHANNELS = null;
+									if (jsonObj[key][value].match('CODEC_ID') == 'CODEC_ID')
+										nowacodec = jsonObj[key][value];
+									
+									if (value == 'PROFILE')
+										APROFILE = jsonObj[key][value];
+									else if (value == 'MAXCHANNELS')
+										MAXCHANNELS = jsonObj[key][value];
+									else if (value == 'MAXFREQUENCY')
+										MAXFREQUENCY = jsonObj[key][value];
+									else if (value == 'MAXBITRATE')
+										ABITRATE = jsonObj[key][value];
+									else if (value == 'LEVEL')
+										ABITRATE = jsonObj[key][value];
+									else if (value == 'OPTION')
+										AOPTION = jsonObj[key][value];
+										
+											
+									if (acounted == (alength)){
+										if (videoOrmusic == 1){
+										pretyep = codectype;
+										arrayindex_two = vcodecindex;
+										codectype = 1;
+										}
+										if (videoOrmusic == 1){
+											VLEVEL = VBITRATE = VFRRAME = VPROFILE = MAXHEIGHT = MAXWIDTH = VOPTION = null;
+											if (jsonObj[key][value].match('CODEC_ID') == 'CODEC_ID')
+												nowvcodec = jsonObj[key][value];
+											if (value == 'PROFILE')
+												VPROFILE = jsonObj[key][value];
+											else if (value == 'MAXHEIGHT')
+												MAXHEIGHT = jsonObj[key][value];
+											else if (value == 'MAXWIDTH')
+												MAXWIDTH = jsonObj[key][value];
+											else if (value == 'LEVEL')
+												VLEVEL = jsonObj[key][value];
+											else if (value == 'MAXBITRATE')
+												VBITRATE = jsonObj[key][value];
+											else if (value == 'OPTION')
+												VOPTION = jsonObj[key][value];
+										}
+									}
+								} else if (codectype == 3){
+									if (jsonObj[key][value].match('CODEC_ID') == 'CODEC_ID'){
+										if (pretype == 2){
+											pretype = codectype;
+											arrayindex_two = acodecindex;
+											codectype = 2;
+											//if (videoOrmusic == 1){
+												ALEVEL = ABITRATE = APROFILE = MAXFREQUENCY = MAXCHANNELS = AOPTION = null;
+												if (jsonObj[key][value].match('CODEC_ID') == 'CODEC_ID')
+													nowacodec = jsonObj[key][value];
+												
+												if (value == 'PROFILE')
+													APROFILE = jsonObj[key][value];
+												else if (value == 'MAXCHANNELS')
+													MAXCHANNELS = jsonObj[key][value];
+												else if (value == 'MAXFREQUENCY')
+													MAXFREQUENCY = jsonObj[key][value];
+												else if (value == 'MAXBITRATE')
+													ABITRATE = jsonObj[key][value];
+												else if (value == 'LEVEL')
+													ABITRATE = jsonObj[key][value];
+												else if (value == 'OPTION')
+													AOPTION = jsonObj[key][value];
+											//}
+											}
+										
+										if (acounted == (alength)){
+											pretype = 2;
+											arrayindex_two = vcodecindex;
+											codectype = 1;
+											if (videoOrmusic == 1){
+												VLEVEL = VBITRATE = VFRRAME = VPROFILE = MAXHEIGHT = MAXWIDTH = VOPTION = null;
+												if (jsonObj[key][value].match('CODEC_ID') == 'CODEC_ID')
+													nowvcodec = jsonObj[key][value];
+													
+												if (value == 'PROFILE')
+													VPROFILE = jsonObj[key][value];
+												else if (value == 'MAXHEIGHT')
+													MAXHEIGHT = jsonObj[key][value];
+												else if (value == 'MAXWIDTH')
+													MAXWIDTH = jsonObj[key][value];
+												else if (value == 'LEVEL')
+													VLEVEL = jsonObj[key][value];
+												else if (value == 'MAXBITRATE')
+													VBITRATE = jsonObj[key][value];
+												else if (value == 'OPTION')
+													VOPTION = jsonObj[key][value];
+											}
+										}
+									} else if (jsonObj[key][value].match('FORMAT_') == 'FORMAT_'){
+										if (videoOrmusic == 1)
+										{
+											whitelist[whitelistindex] = new Array;
+											whitelist[whitelistindex][0] = jsonObj[key][value].substr(7);
+											whitelist[whitelistindex][1] = nowvcodec.substr(9);
+											whitelist[whitelistindex][2] = nowacodec.substr(9);
+											whitelist[whitelistindex][3] = whitelistindex;
+											whitelist[whitelistindex][4] = 0;
+			//VLEVEL, VBITRATE, VFRRAME, VPROFILE,  MAXWIDTH, MAXHEIGHT, ALEVEL, ABITRATE, APROFILE, MAXFREQUENCY, MAXCHANNELS, SUBTYPE, PN, MIME;
+											whitelist_option[whitelistindex] = new Array;
+											
+											whitelist_option[whitelistindex][0] = -1;
+											
+											if (VLEVEL)
+												whitelist_option[whitelistindex][1] = VLEVEL;
+											else 
+												whitelist_option[whitelistindex][1] = -1;
+												
+											if (VBITRATE)
+												whitelist_option[whitelistindex][2] = VBITRATE;
+											else 
+												whitelist_option[whitelistindex][2] = -1;
+											
+											if (VFRRAME)
+												whitelist_option[whitelistindex][3] = VFRRAME;
+											else 
+												whitelist_option[whitelistindex][3] = -1;
+											
+											if (VPROFILE)
+												whitelist_option[whitelistindex][4] = VPROFILE;
+											else
+												whitelist_option[whitelistindex][4] = -1;
+											
+											if (MAXWIDTH)
+												whitelist_option[whitelistindex][5] = MAXWIDTH;
+											else
+												whitelist_option[whitelistindex][5] = -1;
+											
+											if (MAXHEIGHT)
+												whitelist_option[whitelistindex][6] = MAXHEIGHT;
+											else
+												whitelist_option[whitelistindex][6] = -1;
+												
+											if (VOPTION)
+												whitelist_option[whitelistindex][7] = VOPTION;
+											else
+												whitelist_option[whitelistindex][7] = -1;
+											
+											if (ALEVEL)
+												whitelist_option[whitelistindex][8] = ALEVEL;
+											else
+												whitelist_option[whitelistindex][8] = -1;
+											
+											if (ABITRATE)
+												whitelist_option[whitelistindex][9] = ABITRATE;
+											else
+												whitelist_option[whitelistindex][9] = -1;
+											
+											if (APROFILE)
+												whitelist_option[whitelistindex][10] = APROFILE;
+											else 
+												whitelist_option[whitelistindex][10] = -1;
+											
+											if (MAXCHANNELS)
+												whitelist_option[whitelistindex][11] = MAXCHANNELS;
+											else
+												whitelist_option[whitelistindex][11] = -1;
+											
+											if (MAXFREQUENCY)
+												whitelist_option[whitelistindex][12] = MAXFREQUENCY;
+											else
+												whitelist_option[whitelistindex][12] = -1;
+												
+											if (AOPTION)
+												whitelist_option[whitelistindex][13] = AOPTION;
+											else
+												whitelist_option[whitelistindex][13] = -1;
+											
+											if (SUBTYPE)
+												whitelist_option[whitelistindex][14] = SUBTYPE;
+											else
+												whitelist_option[whitelistindex][14] = -1;
+											
+											if (PN)
+												whitelist_option[whitelistindex][15] = PN;
+											else
+												whitelist_option[whitelistindex][15] = -1;
+											
+											if (MIME)
+												whitelist_option[whitelistindex][16] = MIME;
+											else
+												whitelist_option[whitelistindex][16] = -1;
+												
+											if (FOPTION)
+												whitelist_option[whitelistindex][17] = FOPTION;
+											else
+												whitelist_option[whitelistindex][17] = -1;
+												
+											SUBTYPE = PN = MIME = FOPTION = null;
+			//VLEVEL = VBITRATE = VFRRAME = VPROFILE = MAXHEIGHT = MAXWIDTH = ALEVEL = ABITRATE = APROFILE = MAXFREQUENCY = MAXCHANNELS = SUBTYPE = PN = MIME = null;
+											whitelistindex++;
+										} 
+										if (videoOrmusic == 2){
+											whitelist_audio[whitelistindex] = new Array;
+											whitelist_audio[whitelistindex][0] = jsonObj[key][value].substr(7);
+											whitelist_audio[whitelistindex][1] = nowacodec.substr(9);
+											whitelist_audio[whitelistindex][2] = whitelistindex;
+											whitelist_audio[whitelistindex][3] = 0;
+											
+											if (ALEVEL)
+												whitelist_audio[whitelistindex][4] = ALEVEL;
+											else
+												whitelist_audio[whitelistindex][4] = -1;
+											if (ABITRATE)
+												whitelist_audio[whitelistindex][5] = ABITRATE;
+											else
+												whitelist_audio[whitelistindex][5] = -1;
+											if (APROFILE)
+												whitelist_audio[whitelistindex][6] = APROFILE;
+											else
+												whitelist_audio[whitelistindex][6] = -1;
+											if (MAXCHANNELS)
+												whitelist_audio[whitelistindex][7] = MAXCHANNELS;
+											else
+												whitelist_audio[whitelistindex][7] = -1;
+											if (MAXFREQUENCY)
+												whitelist_audio[whitelistindex][8] = MAXFREQUENCY;
+											else
+												whitelist_audio[whitelistindex][8] = -1;
+												
+											if (AOPTION)
+												whitelist_audio[whitelistindex][9] = AOPTION;
+											else
+												whitelist_audio[whitelistindex][9] = -1;
+												
+											if (SUBTYPE)
+												whitelist_audio[whitelistindex][10] = SUBTYPE;
+											else
+												whitelist_audio[whitelistindex][10] = -1;
+											if (PN)
+												whitelist_audio[whitelistindex][11] = PN;
+											else
+												whitelist_audio[whitelistindex][11] = -1;
+											if (MIME)
+												whitelist_audio[whitelistindex][12] = MIME;
+											else
+												whitelist_audio[whitelistindex][12] = -1;
+											if (FOPTION)
+												whitelist_audio[whitelistindex][13] = FOPTION;
+											else
+												whitelist_audio[whitelistindex][13] = -1;
+												
+											SUBTYPE = PN = MIME = FOPTION = null;
+											whitelistindex++;
+										}
+									} else {
+										if (videoOrmusic == 1){
+											
+											if (value == 'PN')
+												PN = jsonObj[key][value];
+											else if (value == 'MIME')
+												MIME = jsonObj[key][value];
+											else if (value == 'SUBTYPE')
+												SUBTYPE = jsonObj[key][value];
+											else if (value == 'OPTION')
+												FOPTION = jsonObj[key][value];
+										
+											if (SUBTYPE)
+												whitelist_option[whitelistindex-1][14] = SUBTYPE;
+											else
+												whitelist_option[whitelistindex-1][14] = -1;
+											
+											if (PN)
+												whitelist_option[whitelistindex-1][15] = PN;
+											else
+												whitelist_option[whitelistindex-1][15] = -1;
+											
+											if (MIME)
+												whitelist_option[whitelistindex-1][16] = MIME;
+											else
+												whitelist_option[whitelistindex-1][16] = -1;
+											if (FOPTION)
+												whitelist_option[whitelistindex-1][17] = FOPTION;
+											else
+												whitelist_option[whitelistindex-1][17] = -1;
+										} else if ( videoOrmusic == 2){
+											if (value == 'PN')
+												PN = jsonObj[key][value];
+											else if (value == 'MIME')
+												MIME = jsonObj[key][value];
+											else if (value == 'SUBTYPE')
+												SUBTYPE = jsonObj[key][value];
+											else if (value == 'OPTION')
+												FOPTION = jsonObj[key][value];
+										
+											if (SUBTYPE)
+												whitelist_audio[whitelistindex-1][10] = SUBTYPE;
+											else
+												whitelist_audio[whitelistindex-1][10] = -1;
+											
+											if (PN)
+												whitelist_audio[whitelistindex-1][11] = PN;
+											else
+												whitelist_audio[whitelistindex-1][11] = -1;
+											
+											if (MIME)
+												whitelist_audio[whitelistindex-1][12] = MIME;
+											else
+												whitelist_audio[whitelistindex-1][12] = -1;
+											
+											if (FOPTION)
+												whitelist_audio[whitelistindex-1][13] = FOPTION;
+											else
+												whitelist_audio[whitelistindex-1][13] = -1;
+										}
+									}
+								} else if (value = 'NAME'){
+									DEVICE_NAME = jsonObj[key][value];
+								}
+								
+								XMLtoJSON_array[arrayindex_one][arrayindex_two] = jsonObj[key][value];
+								arrayindex_two++;
+								
+								if (value == 'OPTION'){
+									recursive = 0;
+									
+									if (codectype == 0){
+										arrayindex_two = 0;
+									} else if (codectype == 1){
+										VOPTION = jsonObj[key][value];
+										arrayindex_two = vcodecindex;
+									} else if (codectype == 2){
+										AOPTION = jsonObj[key][value];
+										arrayindex_two = acodecindex;
+										acounted++;
+										if (acounted == (alength)){
+											pretype = codectype;
+											codectype = 1;
+											arrayindex_two = acodecindex;
+										}
+									} else if (codectype == 3){
+										arrayindex_two = formatindex;
+										fcounted++;
+										
+										if (fcounted == flength){
+											pretype = codectype;
+											codectype = 2;
+											arrayindex_two = acodecindex;
+										}
+									}
+								}
+							}
+							
+							arrayindex_one++;
+							XMLtoJSON_array[arrayindex_one] = new Array;
+						} else if (key == 'VIDEO'){
+							videoOrmusic = 1;
+							XMLtoJSON_array[arrayindex_one] = ['VIDEO'];
+							arrayindex_two = 1;
+							recursive = 1;
+						} else if (key == 'MUSIC'){
+							videoOrmusic = 2;
+							XMLtoJSON_array[arrayindex_one] = ['MUSIC'];
+							arrayindex_two = 1;
+							acodecindex = 1;
+							pretype = 0;
+							recursive = 1;
+							whitelistindex = 0;
+						} else if (key == 'VCODEC'){
+							pretype = 0;
+							XMLtoJSON_array[arrayindex_one][arrayindex_two] = 'VCODEC';
+							vcodecindex = arrayindex_two;
+							arrayindex_one++;
+							XMLtoJSON_array[arrayindex_one] = new Array;
+							recursive = 1;
+							codectype = 1;
+						} else if (key == 'ACODEC'){
+							if (videoOrmusic == 1){
+								arrayindex_two = vcodecindex + 1;
+							} else if (videoOrmusic == 2){
+							}
+							
+							pretype = 1;
+							alength = getJSONLength(jsonObj[key]);
+							acounted = 0;
+							XMLtoJSON_array[arrayindex_one][arrayindex_two] = 'ACODEC';
+							acodecindex = arrayindex_two;
+							arrayindex_one++;
+							XMLtoJSON_array[arrayindex_one] = new Array;
+							recursive = 1;
+							codectype = 2;
+						} else if (key == 'FORMAT'){
+							pretype = 2;
+							flength = getJSONLength(jsonObj[key]);
+							fcounted = 0;
+							arrayindex_two = acodecindex + 1;
+							XMLtoJSON_array[arrayindex_one][arrayindex_two] = 'FORMAT';
+							formatindex = arrayindex_two;
+							arrayindex_one++;
+							XMLtoJSON_array[arrayindex_one] = new Array;
+							recursive = 1;
+							codectype = 3;
+						} else if (key == 'remove'){
+						} else if (key == 'comment'){
+						} else {
+							if (typeof(jsonObj[key]) == 'object')
+								parseJSONattributes(jsonObj[key]);
+							else 
+								recursive = 0;
+						}
+						
+						if (recursive == 1)
+							parseJSONattributes(jsonObj[key]);
+					}
+					return 0;
+				};	
+				function getJSONLength(jsonObj){
+					if (Array.isArray(jsonObj)){
+						return jsonObj.length;
+					}
+					var count = 0;
+					for (key in jsonObj){
+                        if (!jsonObj.hasOwnProperty(key)) {
+							continue;
+							}
+                            count++;
+                        //}
+					}
+					//return count;
+					return 1;
+				};
+				function keyMusicDefault(index){
+					//Music_
+					if (whitelist_audio[index][5] != -1)
+						Ext.getCmp('Music_abitrate_combo').setValue(whitelist_audio[index][5]);
+					else
+						Ext.getCmp('Music_abitrate_combo').setValue(_LANG_NONE);
+					if (whitelist_audio[index][6] != -1)
+						Ext.getCmp('Music_aprofile_combo').setValue(whitelist_audio[index][6]);
+					else
+						Ext.getCmp('Music_aprofile_combo').setValue(_LANG_NONE);
+					if (whitelist_audio[index][7] != -1)
+						Ext.getCmp('Music_channels_combo').setValue(whitelist_audio[index][7]);
+					else
+						Ext.getCmp('Music_channels_combo').setValue(_LANG_NONE);
+					if (whitelist_audio[index][8] != -1)
+						Ext.getCmp('Music_samplerate_combo').setValue(whitelist_audio[index][8]);
+					else
+						Ext.getCmp('Music_samplerate_combo').setValue(_LANG_NONE);
+					if (whitelist_audio[index][11] != -1)
+						Ext.getCmp('Music_pn_combo').setValue(whitelist_audio[index][11]);
+					else
+						Ext.getCmp('Music_pn_combo').setValue(_LANG_NONE);
+					if (whitelist_audio[index][12] != -1)
+						Ext.getCmp('Music_mime_combo').setValue(whitelist_audio[index][12]);
+					else
+						Ext.getCmp('Music_mime_combo').setValue(_LANG_NONE);
+				}
+				function keydefault(index){
+					//console.info('key = ' + whitelist_option[index][5]);
+					if (whitelist_option[index][2] != -1)
+						Ext.getCmp('vbitrate_combo').setValue(whitelist_option[index][2]);
+					else
+						Ext.getCmp('vbitrate_combo').setValue(_LANG_NONE);
+					if (whitelist_option[index][4] != -1)
+						Ext.getCmp('vprofile_combo').setValue(whitelist_option[index][4]);
+					else
+						Ext.getCmp('vprofile_combo').setValue(_LANG_NONE);
+					if (whitelist_option[index][5] != -1)
+						Ext.getCmp('maxwidth_combo').setValue(whitelist_option[index][5]);
+					else
+						Ext.getCmp('maxwidth_combo').setValue(_LANG_NONE);
+					if (whitelist_option[index][6] != -1)
+						Ext.getCmp('maxheight_combo').setValue(whitelist_option[index][6]);
+					else
+						Ext.getCmp('maxheight_combo').setValue(_LANG_NONE);
+					if (whitelist_option[index][9] != -1)
+						Ext.getCmp('abitrate_combo').setValue(whitelist_option[index][9]);
+					else
+						Ext.getCmp('abitrate_combo').setValue(_LANG_NONE);
+					if (whitelist_option[index][10] != -1)
+						Ext.getCmp('aprofile_combo').setValue(whitelist_option[index][10]);
+					else
+						Ext.getCmp('aprofile_combo').setValue(_LANG_NONE);
+					if (whitelist_option[index][11] != -1)
+						Ext.getCmp('channels_combo').setValue(whitelist_option[index][11]);
+					else
+						Ext.getCmp('channels_combo').setValue(_LANG_NONE);
+					if (whitelist_option[index][12] != -1)
+						Ext.getCmp('samplerate_combo').setValue(whitelist_option[index][12]);
+					else
+						Ext.getCmp('samplerate_combo').setValue(_LANG_NONE);
+					if (whitelist_option[index][15] != -1)
+						Ext.getCmp('pn_combo').setValue(whitelist_option[index][15]);
+					else
+						Ext.getCmp('pn_combo').setValue(_LANG_NONE);
+					if (whitelist_option[index][16] != '')
+						Ext.getCmp('mime_combo').setValue(whitelist_option[index][16]);
+					else
+						Ext.getCmp('mime_combo').setValue(_LANG_NONE);
+				}
+				function getNewsetting(index){
+					if (Ext.getCmp('vbitrate_combo').getValue() != _LANG_NONE)
+						whitelist_option[index][2] = Ext.getCmp('vbitrate_combo').getValue();
+					else
+						whitelist_option[index][2] = -1
+						
+					if (Ext.getCmp('vprofile_combo').getValue() != _LANG_NONE)
+						whitelist_option[index][4] = Ext.getCmp('vprofile_combo').getValue();
+					else
+						whitelist_option[index][4] = -1
+						
+					if (Ext.getCmp('maxwidth_combo').getValue() != _LANG_NONE)
+						whitelist_option[index][5] = Ext.getCmp('maxwidth_combo').getValue().valueOf();
+					else
+						whitelist_option[index][5] = -1
+						
+					if (Ext.getCmp('maxheight_combo').getValue() != _LANG_NONE)
+						whitelist_option[index][6] = Ext.getCmp('maxheight_combo').getValue();
+					else
+						whitelist_option[index][6] = -1
+						
+					if (Ext.getCmp('abitrate_combo').getValue() != _LANG_NONE)
+						whitelist_option[index][9] = Ext.getCmp('abitrate_combo').getValue();
+					else
+						whitelist_option[index][9] = -1
+						
+					if (Ext.getCmp('aprofile_combo').getValue() != _LANG_NONE)
+						whitelist_option[index][10] = Ext.getCmp('aprofile_combo').getValue();
+					else
+						whitelist_option[index][10] = -1
+						
+					if (Ext.getCmp('channels_combo').getValue() != _LANG_NONE)
+						whitelist_option[index][11] = Ext.getCmp('channels_combo').getValue();
+					else
+						whitelist_option[index][11] = -1
+						
+					if (Ext.getCmp('samplerate_combo').getValue() != _LANG_NONE)
+						whitelist_option[index][12] = Ext.getCmp('samplerate_combo').getValue();
+					else
+						whitelist_option[index][12] = -1
+						
+					if (Ext.getCmp('pn_combo').getValue() != _LANG_NONE)
+						whitelist_option[index][15] = Ext.getCmp('pn_combo').getValue();
+					else
+						whitelist_option[index][15] = -1
+						
+					if (Ext.getCmp('mime_combo').getValue() != _LANG_NONE)
+						whitelist_option[index][17] = Ext.getCmp('mime_combo').getValue();
+					else
+						whitelist_option[index][17] = -1
+				}
+				function getMusicnewSetting(index){
+					if (Ext.getCmp('Music_abitrate_combo').getValue() != _LANG_NONE)
+						whitelist_audio[index][5] = Ext.getCmp('Music_abitrate_combo').getValue();
+					else
+						whitelist_audio[index][5] = -1
+						
+					if (Ext.getCmp('Music_aprofile_combo').getValue() != _LANG_NONE)
+						whitelist_audio[index][6] = Ext.getCmp('Music_aprofile_combo').getValue();
+					else
+						whitelist_audio[index][6] = -1
+						
+					if (Ext.getCmp('Music_channels_combo').getValue() != _LANG_NONE)
+						whitelist_audio[index][7] = Ext.getCmp('Music_channels_combo').getValue();
+					else
+						whitelist_audio[index][7] = -1
+						
+					if (Ext.getCmp('Music_samplerate_combo').getValue() != _LANG_NONE)
+						whitelist_audio[index][8] = Ext.getCmp('Music_samplerate_combo').getValue();
+					else
+						whitelist_audio[index][8] = -1
+						
+					if (Ext.getCmp('Music_pn_combo').getValue() != _LANG_NONE)
+						whitelist_audio[index][11] = Ext.getCmp('Music_pn_combo').getValue();
+					else
+						whitelist_audio[index][11] = -1
+						
+					if (Ext.getCmp('Music_mime_combo').getValue() != _LANG_NONE)
+						whitelist_audio[index][12] = Ext.getCmp('Music_mime_combo').getValue();
+					else
+						whitelist_audio[index][12] = -1
+						
+				}
+				//allen end
